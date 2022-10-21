@@ -1,0 +1,78 @@
+functionality:
+  name: cellranger_arc_count
+  namespace: mapping
+  description: Align fastq files using Cell Ranger Arc count for both GEX and ATAC.
+  authors:
+    - name: Yang-Joon Kim
+      roles: [ author ]
+      props: { github: yangjun9095, orcid: "0000-0003-1742-5657" }
+    - name: Samuel D'Souza
+      roles: [ author ]
+      props: { github: srdsam }
+    - name: Robrecht Cannoodt
+      email: robrecht@data-intuitive.com
+      roles: [ author, maintainer ]
+      props: { github: rcannood, orcid: "0000-0003-3641-729X" }
+  argument_groups:
+    - name: Inputs
+      arguments:
+        - type: file
+          name: --input
+          required: true
+          multiple: true
+          multiple_sep: ";"
+          example: "metadata.csv"
+          description: The path to a csv file containing the fastq file paths for both GEX and ATAC (column names are fastqs, sample, and library_type)
+          #example: [ "sample_S1_L001_R1_001.fastq.gz", "sample_S1_L001_R2_001.fastq.gz" ]
+          #description: The fastq.gz files to align. Can also be a single directory containing fastq.gz files.
+        - type: file
+          name: --reference
+          required: true
+          description: The path to Cell Ranger Arc reference tar.gz file.
+          example: reference.tar.gz
+    - name: Outputs
+      arguments:
+        - type: file
+          name: --output
+          direction: output
+          description: The folder to store the alignment results.
+          example: "/path/to/output"
+          required: true
+    - name: Arguments
+      arguments:
+        - type: integer
+          name: --expect_cells
+          example: 3000
+          description: "Expected number of recovered cells, used as input to cell calling algorithm."
+
+        - type: boolean
+          name: "--secondary_analysis"
+          default: false
+          description: Whether or not to run the secondary analysis e.g. clustering.
+
+        - type: boolean
+          name: "--generate_bam"
+          default: true
+          description: Whether to generate a BAM file.
+        
+        - type: boolean
+          name: "--include_introns"
+          default: true
+          description: Include intronic reads in GEX count (default=true unless --target-panel is specified in which case default=false)
+  resources:
+    - type: bash_script
+      path: script.sh
+  test_resources:
+    - type: python_script
+      path: test.py
+    - path: ../../../resources_test/cellranger_tiny_fastq
+platforms:
+  - type: docker
+    image: ghcr.io/data-intuitive/cellranger_arc:latest
+    setup:
+      - type: docker
+        run: apt update && apt upgrade -y
+  - type: nextflow
+    variant: vdsl3
+    directives:
+      label: [ highmem, highcpu ]
